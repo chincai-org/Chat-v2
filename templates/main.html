@@ -13,6 +13,6 @@
         <p>{{.Text}}</p>
         {{end}} {{end}}
     </div>
-    <input hx-swap="beforeend" hx-post="/send-message" hx-trigger="keydown[key=='Enter']" hx-target="#channel" type="text" name="message-box">
+    <input hx-swap="beforeend" hx-post="/send-message" hx-trigger="keydown[key=='Enter']" hx-target="#channel" hx-on::after-request="this.value=''" type="text" name="message-box">
 </body>
 </html>
