@@ -23,7 +23,7 @@ func main() {
 
 	rootHandler := func(w http.ResponseWriter, r *http.Request) {
 		//retrive a file from disc
-		tmpl := template.Must(template.ParseFiles("./templates/main.html"))
+		tmpl := template.Must(template.ParseFiles("./templates/index.html"))
 		//compile it and send it as a response
 		tmpl.Execute(w, data)
 	}

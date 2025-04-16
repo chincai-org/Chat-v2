@@ -8,10 +8,14 @@
 </head>
 <body>
     <div id="channel">
-        {{range .Messages}} {{block "message-element" .}}
-        <label>{{.Id}}</label>
-        <p>{{.Text}}</p>
-        {{end}} {{end}}
+        {{range .Messages}} 
+        {{block "message-element" .}}
+        <div>
+            <p>{{.Id}}</p>
+            <p>{{.Text}}</p>
+        </div>
+        {{end}} 
+        {{end}}
     </div>
     <input hx-swap="beforeend" hx-post="/send-message" hx-trigger="keydown[key=='Enter']" hx-target="#channel" hx-on::after-request="this.value=''" type="text" name="message-box">
 </body>
