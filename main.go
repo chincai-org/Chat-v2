@@ -3,16 +3,21 @@ package main
 import (
 	"html/template"
 	"io"
+	"net/http"
+	"sync"
+	"fmt"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo-contrib/session"
+	"github.com/gorilla/sessions"
 )
 
 type Templates struct {
 	templates *template.Template
 }
 
-func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *Templates) Render(w io.Writer, name string, data any, c echo.Context) error {
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 func newTemplate() *Templates {
@@ -33,33 +38,41 @@ func newUser(name, password string) User {
 	}
 }
 
-type Users = []User
+var userStore = struct {
+	sync.RWMutex
+	users []User
+}{users: []User{}}
 
-type Data struct {
-	Users Users
+func getPassword(index int) (string, error) {
+	userStore.RLock()
+	defer userStore.RUnlock()
+
+	if index < 0 || index >= len(userStore.users) {
+		return "", fmt.Errorf("index out of bounds: %d", index)
+	}
+
+	return userStore.users[index].Password, nil
 }
 
-func (d *Data) existUsername(username string) (int, bool) {
-	for i, user := range d.Users {
+func existUsername(username string) (int, bool) {
+	userStore.RLock() // Acquire read lock
+	defer userStore.RUnlock()
+
+	for i, user := range userStore.users {
 		if user.Username == username {
 			return i, true
 		}
 	}
 	return 0, false
 }
-func (d *Data) invalidUsername(username string) bool {
+
+func invalidUsername(username string) bool {
 	for _, char := range username {
 		if (char < 'A' || char > 'Z') && (char < 'a' || char > 'z') && char != '_' && char != '-' {
 			return true
 		}
 	}
 	return false
-}
-
-func newData() Data {
-	return Data{
-		Users: []User{},
-	}
 }
 
 type FormData struct {
@@ -74,23 +87,35 @@ func newFormData() FormData {
 	}
 }
 
-type Page struct {
-	Data Data
-	Form FormData
-}
+func (u *User) login(c echo.Context) error {
+	userStore.Lock()
+	userStore.users = append(userStore.users, *u)
+	userStore.Unlock()
 
-func newPage() Page {
-	return Page{
-		Data: newData(),
-		Form: newFormData(),
+	c.Response().Header().Set("HX-Redirect", "/main")
+
+	// Set up session
+	sess, err := session.Get("session", c)
+	if err != nil {
+		return err
 	}
+	sess.Options = &sessions.Options {
+			Path:     "/",
+			MaxAge:   86400 * 7,
+			HttpOnly: true,
+	}
+	sess.Values["username"] = u.Username
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+			return err
+	}
+	return c.NoContent(http.StatusOK)
 }
 
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret-key"))))
 
-	page := newPage()
 	e.Renderer = newTemplate()
 	e.Static("/static/images", "images")
 	e.Static("/static/css", "css")
@@ -100,11 +125,11 @@ func main() {
 	})
 
 	e.GET("/signup", func(c echo.Context) error {
-		return c.Render(200, "signup", page)
+		return c.Render(200, "signup", nil)
 	})
 
 	e.GET("/signin", func(c echo.Context) error {
-		return c.Render(200, "signin", page)
+		return c.Render(200, "signin", nil)
 	})
 
 	e.POST("/signup-validator", func(c echo.Context) error {
@@ -116,14 +141,14 @@ func main() {
 		formData.Values["username"] = username
 		formData.Values["password"] = password
 		formData.Values["confirmPassword"] = confirmPassword
-		_, existUsername := page.Data.existUsername(username)
+		_, existUsername := existUsername(username)
 		if len(username) < 3 {
 			formData.Errors["username"] = "Username must be at least 3 characters long"
 		} else if len(username) > 15 {
 			formData.Errors["username"] = "Username must be at most 15 characters long"
 		} else if existUsername {
 			formData.Errors["username"] = "Username already exist"
-		} else if page.Data.invalidUsername(username) {
+		} else if invalidUsername(username) {
 			formData.Errors["username"] = "Username can only contain alphabets, numbers, underscore(_) and dash(-)"
 		} else if len(password) < 6 {
 			formData.Errors["password"] = "Password must be at least 6 characters long"
@@ -137,9 +162,7 @@ func main() {
 		}
 
 		user := newUser(username, password)
-		page.Data.Users = append(page.Data.Users, user)
-		c.Response().Header().Set("HX-Redirect", "/main")
-		return nil
+		return user.login(c)
 	})
 
 	e.POST("/signin-validator", func(c echo.Context) error {
@@ -149,19 +172,24 @@ func main() {
 		formData := newFormData()
 		formData.Values["username"] = username
 		formData.Values["password"] = password
-		idx, existUsername := page.Data.existUsername(username)
+		index, existUsername := existUsername(username)
 		if !existUsername {
 			formData.Errors["username"] = "Username do not exist"
 			return c.Render(422, "sign-in-form", formData)
-		} else if page.Data.Users[idx].Password != password {
+		} 
+		readPassword, err := getPassword(index)
+		if err != nil {
+			fmt.Println("Error retrieving password:", err)
+			formData.Errors[""] = "An unexpected error occurred. Please try again."
+			return c.Render(500, "sign-in-form", formData)
+		} 
+		if (readPassword != password) {
 			formData.Errors["password"] = "Password do not match"
 			return c.Render(422, "sign-in-form", formData)
 		}
 
 		user := newUser(username, password)
-		page.Data.Users = append(page.Data.Users, user)
-		c.Response().Header().Set("HX-Redirect", "/main")
-		return nil
+		return user.login(c)
 	})
 
 	e.GET("/main", func(c echo.Context) error {
