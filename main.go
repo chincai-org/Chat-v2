@@ -86,10 +86,15 @@ func (u *User) login(c echo.Context) error {
 
 	// Set up session
 	sess, err := session.Get("session", c)
+	// Corrupted session from session key change
+	// if err != nil || sess == nil {
+		// return echo.NewHTTPError(http.StatusInternalServerError, "Failed to read session")
+	// }
+	// Debug fix
 	if err != nil || sess == nil {
-		// Corrupted session
 		sess = sessions.NewSession(sessionStore, "session")
 	}
+
 	sess.Options = &sessions.Options {
 			Path:     "/",
 			MaxAge:   86400 * 7,
@@ -102,6 +107,19 @@ func (u *User) login(c echo.Context) error {
 
 	c.Response().Header().Set("HX-Redirect", "/")
 	return c.NoContent(http.StatusOK)
+}
+
+func checkLoginSession(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess, err := session.Get("session", c)
+		if err == nil && sess != nil {
+			username, ok := sess.Values["username"].(string)
+			if ok && username != "" {
+				return c.Redirect(http.StatusSeeOther, "/")
+			}
+		}
+		return next(c)
+	}
 }
 
 type FormData struct {
@@ -122,8 +140,18 @@ var sessionStore = sessions.NewCookieStore([]byte("this-key-change-each-reload"+
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
-
 	e.Use(session.Middleware(sessionStore))
+	// Force reload if not htmx request
+	e.Use(func (next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Request().Header.Get("HX-Request") == "" {
+				c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+				c.Response().Header().Set("Pragma", "no-cache")
+				c.Response().Header().Set("Expires", "0")
+			}
+			return next(c)
+		}
+	})
 
 	e.Renderer = newTemplate()
 	e.Static("/static/images", "images")
@@ -143,11 +171,11 @@ func main() {
 
 	e.GET("/signup", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "signup", nil)
-	})
+	}, checkLoginSession)
 
 	e.GET("/signin", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "signin", nil)
-	})
+	}, checkLoginSession)
 
 	e.POST("/signup-validator", func(c echo.Context) error {
 		username := c.FormValue("username")
@@ -180,7 +208,7 @@ func main() {
 
 		user := newUser(username, password)
 		return user.login(c)
-	})
+	}, checkLoginSession)
 
 	e.POST("/signin-validator", func(c echo.Context) error {
 		username := c.FormValue("username")
@@ -207,11 +235,7 @@ func main() {
 
 		user := newUser(username, password)
 		return user.login(c)
-	})
-
-	e.GET("/main", func(c echo.Context) error {
-		return c.Render(http.StatusFound, "main", nil)
-	})
+	}, checkLoginSession)
 
 	e.Logger.Fatal(e.Start(":8000"))
 }
