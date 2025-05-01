@@ -72,7 +72,7 @@ func existUsername(username string) (int, bool) {
 
 func invalidUsername(username string) bool {
 	for _, char := range username {
-		if (char < 'A' || char > 'Z') && (char < 'a' || char > 'z') && char != '_' && char != '-' {
+		if (char < 'A' || char > 'Z') && (char < 'a' || char > 'z') && (char < '0' || char > '9')&& char != '_' && char != '-' {
 			return true
 		}
 	}
