@@ -24,7 +24,7 @@
 {{end}}
 
 {{block "sign-up-form" .}}
-    <form hx-swap="outerHTML" hx-post="signup-validator">
+    <form hx-swap="outerHTML" hx-post="/signup-validator">
         <label for="username">Username:</label>
         <input 
         {{if .Values.username}} value="{{ .Values.username }}" {{end}} 

@@ -105,8 +105,11 @@ func (u *User) login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save session")
 	}
 
-	c.Response().Header().Set("HX-Redirect", "/")
-	return c.NoContent(http.StatusOK)
+	if c.Request().Header.Get("HX-Request") != "" {
+		c.Response().Header().Set("HX-Redirect", "/")
+		return c.NoContent(http.StatusOK)
+	}
+	return c.Redirect(http.StatusSeeOther, "/")
 }
 
 func checkLoginSession(next echo.HandlerFunc) echo.HandlerFunc {
@@ -115,6 +118,10 @@ func checkLoginSession(next echo.HandlerFunc) echo.HandlerFunc {
 		if err == nil && sess != nil {
 			username, ok := sess.Values["username"].(string)
 			if ok && username != "" {
+				if c.Request().Header.Get("HX-Request") != "" {
+					c.Response().Header().Set("HX-Redirect", "/")
+					return c.NoContent(http.StatusOK)
+				}
 				return c.Redirect(http.StatusSeeOther, "/")
 			}
 		}
@@ -135,7 +142,7 @@ func newFormData() FormData {
 }
 
 // Use unchanging key in release
-var sessionStore = sessions.NewCookieStore([]byte("this-key-change-each-reload"+strconv.FormatInt(time.Now().Unix(), 10)))
+var sessionStore = sessions.NewCookieStore([]byte("this-key-changes-each-reload"+strconv.FormatInt(time.Now().Unix(), 10)))
 
 func main() {
 	e := echo.New()
@@ -236,6 +243,19 @@ func main() {
 		user := newUser(username, password)
 		return user.login(c)
 	}, checkLoginSession)
+
+	e.POST("/logout", func(c echo.Context) error {
+		sess, err := session.Get("session", c)
+		if err == nil {
+			sess.Options.MaxAge = -1 // Delete the session
+			sess.Save(c.Request(), c.Response())
+		}
+		if c.Request().Header.Get("HX-Request") != "" {
+			c.Response().Header().Set("HX-Redirect", "/")
+			return c.NoContent(http.StatusOK)
+		}
+		return c.Redirect(http.StatusSeeOther, "/")
+	})
 
 	e.Logger.Fatal(e.Start(":8000"))
 }
