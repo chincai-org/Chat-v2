@@ -1,8 +1,10 @@
 package main
 
 import (
+	"time"
 	"html/template"
 	"io"
+	"strconv"
 	"net/http"
 	"sync"
 	"fmt"
@@ -12,6 +14,8 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/gorilla/sessions"
 )
+
+const StatusUnprocessableEntity = 422
 
 type Templates struct {
 	templates *template.Template
@@ -75,6 +79,31 @@ func invalidUsername(username string) bool {
 	return false
 }
 
+func (u *User) login(c echo.Context) error {
+	userStore.Lock()
+	userStore.users = append(userStore.users, *u)
+	userStore.Unlock()
+
+	// Set up session
+	sess, err := session.Get("session", c)
+	if err != nil || sess == nil {
+		// Corrupted session
+		sess = sessions.NewSession(sessionStore, "session")
+	}
+	sess.Options = &sessions.Options {
+			Path:     "/",
+			MaxAge:   86400 * 7,
+			HttpOnly: true,
+	}
+	sess.Values["username"] = u.Username
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save session")
+	}
+
+	c.Response().Header().Set("HX-Redirect", "/")
+	return c.NoContent(http.StatusOK)
+}
+
 type FormData struct {
 	Values map[string]string
 	Errors map[string]string
@@ -87,49 +116,37 @@ func newFormData() FormData {
 	}
 }
 
-func (u *User) login(c echo.Context) error {
-	userStore.Lock()
-	userStore.users = append(userStore.users, *u)
-	userStore.Unlock()
-
-	c.Response().Header().Set("HX-Redirect", "/main")
-
-	// Set up session
-	sess, err := session.Get("session", c)
-	if err != nil {
-		return err
-	}
-	sess.Options = &sessions.Options {
-			Path:     "/",
-			MaxAge:   86400 * 7,
-			HttpOnly: true,
-	}
-	sess.Values["username"] = u.Username
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-			return err
-	}
-	return c.NoContent(http.StatusOK)
-}
+// Use unchanging key in release
+var sessionStore = sessions.NewCookieStore([]byte("this-key-change-each-reload"+strconv.FormatInt(time.Now().Unix(), 10)))
 
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret-key"))))
+
+	e.Use(session.Middleware(sessionStore))
 
 	e.Renderer = newTemplate()
 	e.Static("/static/images", "images")
 	e.Static("/static/css", "css")
 
 	e.GET("/", func(c echo.Context) error {
-		return c.Render(200, "index", nil)
+		sess, err := session.Get("session", c)
+		if err != nil || sess == nil {
+			return c.Render(http.StatusOK, "index", nil)
+		}
+		username, ok := sess.Values["username"].(string)
+		if !ok || username == "" {
+			return c.Render(http.StatusOK, "index", nil)
+		}
+		return c.Render(http.StatusOK, "main", map[string]string{"Username": username})
 	})
 
 	e.GET("/signup", func(c echo.Context) error {
-		return c.Render(200, "signup", nil)
+		return c.Render(http.StatusOK, "signup", nil)
 	})
 
 	e.GET("/signin", func(c echo.Context) error {
-		return c.Render(200, "signin", nil)
+		return c.Render(http.StatusOK, "signin", nil)
 	})
 
 	e.POST("/signup-validator", func(c echo.Context) error {
@@ -158,7 +175,7 @@ func main() {
 			formData.Errors["confirmPassword"] = "Password do not match"
 		}
 		if len(formData.Errors) > 0 {
-			return c.Render(422, "sign-up-form", formData)
+			return c.Render(StatusUnprocessableEntity, "sign-up-form", formData)
 		}
 
 		user := newUser(username, password)
@@ -175,17 +192,17 @@ func main() {
 		index, existUsername := existUsername(username)
 		if !existUsername {
 			formData.Errors["username"] = "Username do not exist"
-			return c.Render(422, "sign-in-form", formData)
+			return c.Render(StatusUnprocessableEntity, "sign-in-form", formData)
 		} 
 		readPassword, err := getPassword(index)
 		if err != nil {
 			fmt.Println("Error retrieving password:", err)
 			formData.Errors[""] = "An unexpected error occurred. Please try again."
-			return c.Render(500, "sign-in-form", formData)
+			return c.Render(http.StatusInternalServerError, "sign-in-form", formData)
 		} 
 		if (readPassword != password) {
 			formData.Errors["password"] = "Password do not match"
-			return c.Render(422, "sign-in-form", formData)
+			return c.Render(StatusUnprocessableEntity, "sign-in-form", formData)
 		}
 
 		user := newUser(username, password)
@@ -193,7 +210,7 @@ func main() {
 	})
 
 	e.GET("/main", func(c echo.Context) error {
-		return c.Render(302, "main", nil)
+		return c.Render(http.StatusFound, "main", nil)
 	})
 
 	e.Logger.Fatal(e.Start(":8000"))
