@@ -79,11 +79,13 @@ func invalidUsername(username string) bool {
 	return false
 }
 
-func (u *User) login(c echo.Context) error {
+func (u *User) save() {
 	userStore.Lock()
 	userStore.users = append(userStore.users, *u)
 	userStore.Unlock()
+}
 
+func (u *User) login(c echo.Context) error {
 	// Set up session
 	sess, err := session.Get("session", c)
 	// Corrupted session from session key change
@@ -105,11 +107,7 @@ func (u *User) login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save session")
 	}
 
-	if c.Request().Header.Get("HX-Request") != "" {
-		c.Response().Header().Set("HX-Redirect", "/")
-		return c.NoContent(http.StatusOK)
-	}
-	return c.Redirect(http.StatusSeeOther, "/")
+	return c.Render(http.StatusOK, "index", map[string]string{"Username": u.Username})
 }
 
 func checkLoginSession(next echo.HandlerFunc) echo.HandlerFunc {
@@ -118,11 +116,7 @@ func checkLoginSession(next echo.HandlerFunc) echo.HandlerFunc {
 		if err == nil && sess != nil {
 			username, ok := sess.Values["username"].(string)
 			if ok && username != "" {
-				if c.Request().Header.Get("HX-Request") != "" {
-					c.Response().Header().Set("HX-Redirect", "/")
-					return c.NoContent(http.StatusOK)
-				}
-				return c.Redirect(http.StatusSeeOther, "/")
+				return c.Render(http.StatusOK, "index", map[string]string{"Username": username})
 			}
 		}
 		return next(c)
@@ -165,16 +159,8 @@ func main() {
 	e.Static("/static/css", "css")
 
 	e.GET("/", func(c echo.Context) error {
-		sess, err := session.Get("session", c)
-		if err != nil || sess == nil {
-			return c.Render(http.StatusOK, "index", nil)
-		}
-		username, ok := sess.Values["username"].(string)
-		if !ok || username == "" {
-			return c.Render(http.StatusOK, "index", nil)
-		}
-		return c.Render(http.StatusOK, "main", map[string]string{"Username": username})
-	})
+		return c.Render(http.StatusOK, "index", nil)
+	}, checkLoginSession)
 
 	e.GET("/signup", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "signup", nil)
@@ -210,10 +196,11 @@ func main() {
 			formData.Errors["confirmPassword"] = "Password do not match"
 		}
 		if len(formData.Errors) > 0 {
-			return c.Render(StatusUnprocessableEntity, "sign-up-form", formData)
+			return c.Render(StatusUnprocessableEntity, "signup", formData)
 		}
 
 		user := newUser(username, password)
+		user.save()
 		return user.login(c)
 	}, checkLoginSession)
 
@@ -227,17 +214,17 @@ func main() {
 		index, existUsername := existUsername(username)
 		if !existUsername {
 			formData.Errors["username"] = "Username do not exist"
-			return c.Render(StatusUnprocessableEntity, "sign-in-form", formData)
+			return c.Render(StatusUnprocessableEntity, "signin", formData)
 		} 
 		readPassword, err := getPassword(index)
 		if err != nil {
 			fmt.Println("Error retrieving password:", err)
 			formData.Errors[""] = "An unexpected error occurred. Please try again."
-			return c.Render(http.StatusInternalServerError, "sign-in-form", formData)
+			return c.Render(http.StatusInternalServerError, "signin", formData)
 		} 
 		if (readPassword != password) {
 			formData.Errors["password"] = "Password do not match"
-			return c.Render(StatusUnprocessableEntity, "sign-in-form", formData)
+			return c.Render(StatusUnprocessableEntity, "signin", formData)
 		}
 
 		user := newUser(username, password)
@@ -250,11 +237,7 @@ func main() {
 			sess.Options.MaxAge = -1 // Delete the session
 			sess.Save(c.Request(), c.Response())
 		}
-		if c.Request().Header.Get("HX-Request") != "" {
-			c.Response().Header().Set("HX-Redirect", "/")
-			return c.NoContent(http.StatusOK)
-		}
-		return c.Redirect(http.StatusSeeOther, "/")
+		return c.Render(http.StatusOK, "index", nil)
 	})
 
 	e.Logger.Fatal(e.Start(":8000"))

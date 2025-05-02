@@ -1,0 +1,52 @@
+{{ block "signin" . }}
+<form hx-target="this" hx-swap="outerHTML" hx-post="/signin-validator">
+    <label for="username">Username:</label>
+    <input 
+    {{ if .Values.username }} value="{{ .Values.username }}" {{ end }} 
+    type="text" name="username" />
+    {{ if .Errors.username }}
+    <div>{{ .Errors.username }}</div>
+    {{ end }}
+
+    <label for="password">Password:</label>
+    <input 
+    {{ if .Values.password }} value="{{ .Values.password }}" {{ end }} 
+    type="password" name="password" />
+    {{ if .Errors.password }}
+    <div>{{ .Errors.password }}</div>
+    {{ end }}
+
+    <button type="submit">Sign In</button>
+</form>
+{{ end }}
+
+{{ block "signup" . }}
+<form hx-target="this" hx-swap="outerHTML" hx-post="/signup-validator">
+    <label for="username">Username:</label>
+    <input 
+    {{ if .Values.username }} value="{{ .Values.username }}" {{ end }} 
+    type="text" name="username" />
+    {{ if .Errors.username }}
+    <div>{{ .Errors.username }}</div>
+    {{ end }}
+
+    <label for="password">Password:</label>
+    <input 
+    {{ if .Values.password }} value="{{ .Values.password }}" {{ end }} 
+    type="password" name="password" />
+    {{ if .Errors.password }}
+    <div>{{ .Errors.password }}</div>
+    {{ end }}
+
+    <label for="confirm-password">Confirm password:</label>
+    <input 
+    {{ if .Values.confirmPassword }} value="{{ .Values.confirmPassword }}" {{ end }} 
+    type="password" name="confirm-password" />
+    {{ if .Errors.confirmPassword }}
+    <div>{{ .Errors.confirmPassword }}</div>
+    {{ end }}
+
+    <button type="submit">Sign Up</button>
+</form>
+{{ end }}
+

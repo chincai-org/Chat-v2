@@ -1,16 +1,34 @@
-{{block "index" .}}
+{{ block "index" . }}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div hx-boost="true">
-        <a href="/signup">Sign Up</a>
-        <a href="/signin">Sign In</a>
+    <div hx-target="this" hx-swap="outerHTML">
+        {{ if not .Username }}
+        <div>
+            <button hx-get="/signup">Sign Up</button>
+            <button hx-get="/signin">Sign In</button>
+        </div>
+        {{ else }}
+        <p>Hello {{ .Username }}</p>
+        <button hx-post="/logout">Logout</button>
+        {{ end }}
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", (e) => {
+            document.body.addEventListener("htmx:beforeSwap", function(evt) {
+                if (evt.detail.xhr.status == 422) {
+                    evt.detail.shouldSwap = true;
+                    evt.detail.isError = false;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
-{{end}}
+{{ end }}
