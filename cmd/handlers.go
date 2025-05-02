@@ -49,7 +49,7 @@ func signupValidator(c echo.Context) error {
 	} else if len(password) > 30 {
 		formData.Errors["password"] = "Password must be at most 30 characters long"
 	} else if confirmPassword != password {
-		formData.Errors["confirmPassword"] = "Password do not match"
+		formData.Errors["confirmPassword"] = "Password does not match"
 	}
 
 	if len(formData.Errors) > 0 {
