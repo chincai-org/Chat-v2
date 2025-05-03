@@ -8,17 +8,19 @@
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 </head>
 <body>
+    {{ block "main" . }}
     <div hx-target="this" hx-swap="outerHTML">
         {{ if not .Username }}
-        <div>
-            <button hx-get="/signup">Sign Up</button>
-            <button hx-get="/signin">Sign In</button>
+        <div hx-boost="true">
+            <a href="/signup">Sign Up</a>
+            <a href="/signin">Sign In</a>
         </div>
         {{ else }}
         <p>Hello {{ .Username }}</p>
         <button hx-post="/logout">Logout</button>
         {{ end }}
     </div>
+    {{ end }}
     <script>
         document.addEventListener("DOMContentLoaded", (e) => {
             document.body.addEventListener("htmx:beforeSwap", function(evt) {
@@ -27,6 +29,7 @@
                     evt.detail.isError = false;
                 }
             });
+            window.addEventListener("unload", function () {});
         });
     </script>
 </body>

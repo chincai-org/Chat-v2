@@ -17,12 +17,12 @@ func main() {
 	e.Static("/static/images", "images")
 	e.Static("/static/css", "css")
 
-	e.GET("/", renderIndex, checkLoginSession)
-	e.GET("/signup", renderSignup, checkLoginSession)
-	e.GET("/signin", renderSignin, checkLoginSession)
+	e.GET("/", renderIndex)
+	e.GET("/signup", renderSignup, requireLogout, requireHtmx)
+	e.GET("/signin", renderSignin, requireLogout, requireHtmx)
 
-	e.POST("/signup-validator", signupValidator, checkLoginSession)
-	e.POST("/signin-validator", signinValidator, checkLoginSession)
+	e.POST("/signup-validator", signupValidator, requireLogout)
+	e.POST("/signin-validator", signinValidator, requireLogout)
 	e.POST("/logout", logoutHandler)
 
 	e.Logger.Fatal(e.Start(":8000"))
