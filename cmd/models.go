@@ -98,5 +98,8 @@ func (u *User) login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save session")
 	}
 
-	return c.Render(http.StatusOK, "index", map[string]string{"Username": u.Username})
+	if c.Request().Header.Get("HX-Request") != "" {
+		c.Response().Header().Set("HX-Push", "/")
+	}
+	return redirectIndex(c, map[string]string{"Username": u.Username})
 }

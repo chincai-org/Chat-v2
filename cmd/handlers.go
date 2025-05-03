@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo-contrib/session"
 )
@@ -11,7 +10,22 @@ const StatusUnprocessableEntity = 422
 
 // renderIndex renders the index page.
 func renderIndex(c echo.Context) error {
-	return c.Render(http.StatusOK, "index", nil)
+	var username string
+
+	sess, err := session.Get("session", c)
+	if err == nil && sess != nil {
+		name, ok := sess.Values["username"].(string)
+		if ok && name != "" {
+			username = name
+		}
+	}
+
+	// Initial request
+	if c.Request().Header.Get("HX-Request") == "" {
+		return c.Render(http.StatusOK, "index", map[string]string{"Username": username})
+	}
+
+	return c.Render(http.StatusOK, "main", map[string]string{"Username": username})
 }
 
 // renderSignup renders the signup page.
@@ -102,5 +116,13 @@ func logoutHandler(c echo.Context) error {
 		sess.Save(c.Request(), c.Response())
 	}
 
-	return c.Render(http.StatusOK, "index", nil)
+	return redirectIndex(c, nil)
+}
+
+func redirectIndex(c echo.Context, data any) error{
+	if c.Request().Header.Get("HX-Request") != "" {
+		c.Response().Header().Set("HX-Push", "/")
+		return c.Render(http.StatusOK, "main", data)
+	}
+	return c.Redirect(http.StatusSeeOther, "/")
 }
