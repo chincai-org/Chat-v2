@@ -29,7 +29,9 @@
                     evt.detail.isError = false;
                 }
             });
-            window.addEventListener("unload", function () {});
+            window.addEventListener("popstate", () => {
+                window.location.reload();
+            });
         });
     </script>
 </body>
