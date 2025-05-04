@@ -20,12 +20,7 @@ func renderIndex(c echo.Context) error {
 		}
 	}
 
-	// Initial request
-	if c.Request().Header.Get("HX-Request") == "" {
-		return c.Render(http.StatusOK, "index", map[string]string{"Username": username})
-	}
-
-	return c.Render(http.StatusOK, "main", map[string]string{"Username": username})
+	return c.Render(http.StatusOK, "index", map[string]string{"Username": username})
 }
 
 // renderSignup renders the signup page.
@@ -120,9 +115,6 @@ func logoutHandler(c echo.Context) error {
 }
 
 func redirectIndex(c echo.Context, data any) error{
-	if c.Request().Header.Get("HX-Request") != "" {
-		c.Response().Header().Set("HX-Push", "/")
-		return c.Render(http.StatusOK, "main", data)
-	}
-	return c.Redirect(http.StatusSeeOther, "/")
+	c.Response().Header().Set("HX-Push", "/")
+	return c.Render(http.StatusOK, "index", data)
 }

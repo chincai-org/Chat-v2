@@ -18,8 +18,8 @@ func main() {
 	e.Static("/static/css", "css")
 
 	e.GET("/", renderIndex)
-	e.GET("/signup", renderSignup, requireLogout, requireHtmx)
-	e.GET("/signin", renderSignin, requireLogout, requireHtmx)
+	e.GET("/signup", renderSignup, requireLogout)
+	e.GET("/signin", renderSignin, requireLogout)
 
 	e.POST("/signup-validator", signupValidator, requireLogout)
 	e.POST("/signin-validator", signinValidator, requireLogout)
