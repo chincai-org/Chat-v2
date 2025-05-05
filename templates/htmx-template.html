@@ -26,10 +26,7 @@
                 }
             });
             window.addEventListener("popstate", () => {
-                htmx.ajax('GET', window.location.pathname, { 
-                    target: '#content', 
-                    swap: 'outerHTML' 
-                });
+                htmx.ajax('GET', window.location.pathname);
             });
         });
     </script>
