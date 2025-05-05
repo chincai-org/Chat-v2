@@ -11,15 +11,14 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessionStore))
-	e.Use(cacheControlMiddleware)
 
 	e.Renderer = newTemplate()
 	e.Static("/static/images", "images")
 	e.Static("/static/css", "css")
 
 	e.GET("/", renderIndex)
-	e.GET("/signup", renderSignup, requireLogout, requireHtmx)
-	e.GET("/signin", renderSignin, requireLogout, requireHtmx)
+	e.GET("/signup", renderSignup, requireLogout)
+	e.GET("/signin", renderSignin, requireLogout)
 
 	e.POST("/signup-validator", signupValidator, requireLogout)
 	e.POST("/signin-validator", signinValidator, requireLogout)
