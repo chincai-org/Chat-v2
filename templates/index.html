@@ -1,5 +1,5 @@
 {{ define "index" }}
-<div hx-target="this" hx-swap="outerHTML">
+<div id="content" hx-target="this" hx-swap="outerHTML">
     {{ if not .Username }}
     <div hx-boost="true">
         <a href="/signup">Sign Up</a>

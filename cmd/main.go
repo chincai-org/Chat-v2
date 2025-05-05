@@ -11,7 +11,6 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessionStore))
-	e.Use(cacheControlMiddleware)
 
 	e.Renderer = newTemplate()
 	e.Static("/static/images", "images")
