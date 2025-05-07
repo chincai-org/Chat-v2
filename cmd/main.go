@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/echo-contrib/session"
 )
 
 func main() {
@@ -26,4 +26,3 @@ func main() {
 
 	e.Logger.Fatal(e.Start(":8000"))
 }
-

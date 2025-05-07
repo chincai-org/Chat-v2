@@ -1,25 +1,29 @@
 {{ define "htmx-template" }}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous"></script>
 </head>
+
 <body>
     {{ if eq .ContentName "index" }}
-        {{ template "index" . }}
+    {{ template "index" . }}
     {{ else if eq .ContentName "signin" }}
-        {{ template "signin" . }}
+    {{ template "signin" . }}
     {{ else if eq .ContentName "signup" }}
-        {{ template "signup" . }}
+    {{ template "signup" . }}
     {{ else }}
-	    <div>Error template {{ .ContentName }} not found!</div>
+    <div>Error template {{ .ContentName }} not found!</div>
     {{ end }}
     <script>
         document.addEventListener("DOMContentLoaded", (e) => {
-            document.body.addEventListener("htmx:beforeSwap", function(evt) {
+            document.body.addEventListener("htmx:beforeSwap", function (evt) {
                 if (evt.detail.xhr.status == 422) {
                     evt.detail.shouldSwap = true;
                     evt.detail.isError = false;
@@ -31,5 +35,6 @@
         });
     </script>
 </body>
+
 </html>
 {{ end }}
