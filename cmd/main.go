@@ -13,8 +13,8 @@ func main() {
 	e.Use(session.Middleware(sessionStore))
 
 	e.Renderer = newTemplate()
-	e.Static("/static/images", "images")
-	e.Static("/static/css", "css")
+	e.Static("/images", "static/images")
+	e.Static("/css", "static/css")
 
 	e.GET("/", renderIndex)
 	e.GET("/signup", renderSignup, requireLogout)
