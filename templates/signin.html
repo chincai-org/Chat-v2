@@ -1,6 +1,6 @@
 {{ define "signin" }}
-<link rel="stylesheet" href="css/signin.css">
 <form method="post" action="/signin-validator" hx-target="this" hx-swap="outerHTML" hx-boost="true">
+    <link rel="stylesheet" href="css/signin.css">
     <label for="username">Username:</label>
     <input {{ if .Values.username }} value="{{ .Values.username }}" {{ end }} type="text" name="username" />
     {{ if .Errors.username }}

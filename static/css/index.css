@@ -4,12 +4,19 @@
 	font-family: sans-serif;
 }
 
-body {
-	background-color: black;
+html {
+	color-scheme: dark light;
 }
 
 a {
 	color: white;
+}
+
+button {
+	border-radius: 100vh;
+	color: black;
+	font-size: 1rem;
+	padding: .375rem;
 }
 
 .navigation {
@@ -19,4 +26,13 @@ a {
 	font-size: 1.25rem;
 	font-weight: lighter;
 	background-color: hsl(72, 80%, 20%);
+
+	&:has(button) {
+		padding: .5rem
+	}
+
+	& p {
+		align-self: center;
+		color: white;
+	}
 }
