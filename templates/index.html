@@ -1,8 +1,8 @@
 {{ define "index" }}
-
+<link rel="stylesheet" href="css/index.css">
 <div hx-target="this" hx-swap="outerHTML">
     {{ if not .Username }}
-    <div hx-boost="true">
+    <div hx-boost="true" class="navigation">
         <a href="/signup">Sign Up</a>
         <a href="/signin">Sign In</a>
     </div>

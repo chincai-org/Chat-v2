@@ -1,4 +1,22 @@
-a {
-	color: green;
+* {
+	margin: 0;
+	padding: 0;
+	font-family: sans-serif;
+}
 
+body {
+	background-color: black;
+}
+
+a {
+	color: white;
+}
+
+.navigation {
+	display: flex;
+	gap: 1rem;
+	padding: .75rem;
+	font-size: 1.25rem;
+	font-weight: lighter;
+	background-color: hsl(72, 80%, 20%);
 }
