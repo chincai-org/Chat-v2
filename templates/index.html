@@ -1,8 +1,5 @@
 {{ define "index" }}
 
-<head>
-    <link rel="stylesheet" href="css/index.css">
-</head>
 <div hx-target="this" hx-swap="outerHTML">
     {{ if not .Username }}
     <div hx-boost="true">
