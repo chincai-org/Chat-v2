@@ -1,5 +1,5 @@
 {{ define "signin" }}
-<form hx-target="this" hx-swap="outerHTML" hx-post="/signin-validator">
+<form method="post" action="/signin-validator" hx-target="this" hx-swap="outerHTML" hx-boost="true">
     <label for="username">Username:</label>
     <input {{ if .Values.username }} value="{{ .Values.username }}" {{ end }} type="text" name="username" />
     {{ if .Errors.username }}
