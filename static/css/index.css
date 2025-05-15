@@ -1,38 +1,12 @@
-* {
-	margin: 0;
-	padding: 0;
-	font-family: sans-serif;
-}
+@import url(_base.css);
 
 html {
 	color-scheme: dark light;
 }
 
-a {
-	color: white;
-}
-
-button {
-	border-radius: 100vh;
-	color: black;
-	font-size: 1rem;
-	padding: .375rem;
-}
-
 .navigation {
 	display: flex;
-	gap: 1rem;
-	padding: .75rem;
-	font-size: 1.25rem;
+	gap: var(--size-500);
 	font-weight: lighter;
-	background-color: hsl(72, 80%, 20%);
-
-	&:has(button) {
-		padding: .5rem
-	}
-
-	& p {
-		align-self: center;
-		color: white;
-	}
+	align-items: center;
 }

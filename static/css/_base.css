@@ -1,0 +1,56 @@
+@import url(_reset.css);
+
+:root {
+	--clr-neutral-100: white;
+	--clr-neutral-900: black;
+	--clr-primary-800: hsl(72, 80%, 20%);
+	--fs-500: 1rem;
+	--fs-600: 1.25rem;
+	--size-200: .375rem;
+	--size-400: .75rem;
+	--size-500: 1rem;
+}
+
+.clr-neutral-100 {
+	color: var(--clr-neutral-100);
+}
+
+.clr-neutral-900 {
+	color: var(--clr-neutral-900);
+}
+
+.clr-primary-800 {
+	color: var(--clr-primary-800);
+}
+
+.bgclr-neutral-100 {
+	background-color: var(--clr-neutral-100);
+}
+
+.bgclr-neutral-900 {
+	background-color: var(--clr-neutral-900);
+}
+
+.bgclr-primary-800 {
+	background-color: var(--clr-primary-800);
+}
+
+.all-rounded {
+	border-radius: 100vh;
+}
+
+.fs-500 {
+	font-size: var(--fs-500);
+}
+
+.fs-600 {
+	font-size: var(--fs-600);
+}
+
+.padding-200 {
+	padding: var(--size-200);
+}
+
+.padding-400 {
+	padding: var(--size-400);
+}

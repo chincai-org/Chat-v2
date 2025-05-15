@@ -2,14 +2,14 @@
 <div hx-target="this" hx-swap="outerHTML">
     <link rel="stylesheet" href="css/index.css">
     {{ if not .Username }}
-    <div hx-boost="true" class="navigation">
-        <a href="/signup">Sign Up</a>
-        <a href="/signin">Sign In</a>
+    <div hx-boost="true" class="navigation bgclr-primary-800 padding-400 fs-600">
+        <a href="/signup" class="clr-neutral-100">Sign Up</a>
+        <a href="/signin" class="clr-neutral-100">Sign In</a>
     </div>
     {{ else }}
-    <div class="navigation">
+    <div class="navigationi bgclr-primary-800">
         <p>Hello {{ .Username }}!</p>
-        <button hx-post="/logout">Log out</button>
+        <button hx-post="/logout" class="all-rounded fs-500">Log out</button>
     </div>
     {{ end }}
 </div>
